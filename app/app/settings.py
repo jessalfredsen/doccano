@@ -84,14 +84,24 @@ STATICFILES_DIRS = [
 
 WSGI_APPLICATION = 'app.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
+db_engine = os.environ['DB_ENGINE']
+db_name = os.environ['DB_NAME']
+db_password = os.environ['DB_PASSWORD']
+db_user = os.environ['DB_USER']
+db_host = os.environ['DB_HOST']
+db_port = os.environ['DB_PORT']
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': db_engine,
+        'NAME': db_name,
+        'USER': db_user,
+        'PASSWORD': db_password,
+        'HOST': db_host,
+        'PORT': db_port,
     }
 }
 
