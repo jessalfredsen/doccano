@@ -1,5 +1,12 @@
 FROM python:3.7
 
+ARG DB_ENGINE
+ARG DB_NAME
+ARG DB_PASSWORD
+ARG DB_USER
+ARG DB_HOST
+ARG DB_PORT
+
 WORKDIR  /doccano/
 
 COPY requirements.txt /doccano/requirements.txt
@@ -7,8 +14,6 @@ COPY requirements.txt /doccano/requirements.txt
 RUN pip install -r requirements.txt
 
 COPY . /doccano/
-
-COPY .env /doccano/app/
 
 WORKDIR  /doccano/app/
 
