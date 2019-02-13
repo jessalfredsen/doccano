@@ -198,3 +198,9 @@ pip-selfcheck.json
 
 # ignore db to avoid merge conflicts
 *.sqlite3
+
+# ignore django generated static files
+app/staticfiles/
+
+# ignore javascript dependencies
+node_modules/

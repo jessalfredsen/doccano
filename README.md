@@ -1,5 +1,7 @@
 # doccano
 
+[![Build Status](https://travis-ci.org/chakki-works/doccano.svg?branch=master)](https://travis-ci.org/chakki-works/doccano)
+
 doccano is an open source text annotation tool for human. It provides annotation features for text classification, sequence labeling and sequence to sequence. So, you can create labeled data for sentiment analysis, named entity recognition, text summarization and so on. Just create project, upload data and start annotation. You can build dataset in hours.
 
 ## Demo
@@ -24,6 +26,15 @@ Final demo is one of the sequence to sequence tasks, machine translation. Since 
 
 ![Machine Translation](./docs/translation.gif)
 
+## Deployment
+
+### Azure
+
+Doccano can be deployed to Azure ([Web App for Containers](https://azure.microsoft.com/en-us/services/app-service/containers/) +
+[PostgreSQL database](https://azure.microsoft.com/en-us/services/postgresql/)) by clicking on the button below:
+
+[![Deploy to Azure](https://azuredeploy.net/deploybutton.svg)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fchakki-works%2Fdoccano%2Fmaster%2Fazuredeploy.json)
+
 ## Features
 
 * Collaborative annotation
@@ -38,26 +49,39 @@ Final demo is one of the sequence to sequence tasks, machine translation. Since 
 
 ## Installation
 
-To install doccano, simply run:
+First of all, you have to clone the repository:
 
 ```bash
-$ git clone https://github.com/chakki-works/doccano.git
-$ cd doccano
-$ pip install -r requirements.txt
-$ cd app
+git clone https://github.com/chakki-works/doccano.git
+cd doccano
+```
+
+To install doccano, there are two options:
+
+**Option1: Pull the Docker image**
+
+```bash
+docker pull chakkiworks/doccano
+```
+
+**Option2: Setup Python environment**
+
+```bash
+pip install -r requirements.txt
+cd app
 ```
 
 First we need to make migration. Run the following command:
 
 ```bash
-$ python manage.py migrate
+python manage.py migrate
 ```
 
 Next we need to create a user who can login to the admin site. Run the following command:
 
 
 ```bash
-$ python manage.py createsuperuser
+python manage.py createsuperuser
 ```
 
 Enter your desired username and press enter.
@@ -86,10 +110,26 @@ Superuser created successfully.
 
 Let’s start the development server and explore it.
 
-If the server is not running start it like so:
+Depending on your installation method, there are two options:
+
+**Option1: Running the Docker image as a Container**
+
+First, run a Docker container:
 
 ```bash
-$ python manage.py runserver
+docker run -d --name doccano -p 8080:80 chakkiworks/doccano
+```
+
+Then, execute `create-admin.sh` script for creating a superuser.
+
+```bash
+docker exec doccano tools/create-admin.sh "admin" "admin@example.com" "password"
+```
+
+**Option2: Running Django development server**
+
+```bash
+python manage.py runserver
 ```
 
 Now, open a Web browser and go to <http://127.0.0.1:8080/login/>. You should see the login screen:
@@ -115,7 +155,7 @@ After creating a project, you will see the "Import Data" page, or click `Import 
 <img src="./docs/upload.png" alt="Upload project" width=600>
 
 You can upload two types of files:
-- `TXT file`: each line contains a text and no line breaks (`\n`).
+- `CSV file`: file must contain a header with a `text` column or be one-column csv file.
 - `JSON file`: each line contains a JSON object with a `text` key. JSON format supports line breaks rendering.
 
 > Notice: Doccano won't render line breaks in annotation page for sequence labeling task due to the indent problem, but the exported JSON file still contains line breaks.
@@ -134,6 +174,8 @@ He lives in Newark, Ohio.
 {"text": "He lives in Newark, Ohio."}
 ...
 ```
+
+Any other columns (for csv) or keys (for json) are preserved and will be exported in the `metadata` column or key as is.
 
 Once you select a TXT/JSON file on your computer, click `Upload dataset` button. After uploading the dataset file, we will see the `Dataset` page (or click `Dataset` button list in the left bar). This page displays all the documents we uploaded in one project.
 
@@ -156,7 +198,22 @@ After the annotation step, you can download the annotated data. Click the `Edit 
 
 <img src="./docs/export_data.png" alt="Edit label" width=600>
 
-You can export data as CSV file or JSON file by clicking the button. As for the export file format, you can check it here: [Export File Formats](https://github.com/chakki-works/doccano/wiki/Export-File-Formats)
+You can export data as CSV file or JSON file by clicking the button. As for the export file format, you can check it here: [Export File Formats](https://github.com/chakki-works/doccano/wiki/Export-File-Formats). 
+
+Each exported document will have metadata column or key, which will contain
+additional columns or keys from the imported document. The primary use-case for metadata is to allow you to match exported data with other system
+by adding `external_id` to the imported file. For example:
+
+Input file may look like this:
+`import.json`
+```JSON
+{"text": "EU rejects German call to boycott British lamb.", "external_id": 1}
+```
+and the exported file will look like this:
+`output.json`
+```JSON
+{"doc_id": 2023, "text": "EU rejects German call to boycott British lamb.", "labels": ["news"], "username": "root", "metadata": {"external_id": 1}}
+```
 
 ### Tutorial
 

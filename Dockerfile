@@ -1,19 +1,21 @@
-FROM python:3.7
+ARG PYTHON_VERSION="3.6"
 
-WORKDIR  /doccano/
+FROM python:${PYTHON_VERSION}
 
-COPY requirements.txt /doccano/requirements.txt
+COPY requirements.txt /
+RUN pip install --no-cache-dir -r /requirements.txt
 
-RUN pip install -r requirements.txt
+COPY . /doccano
 
-COPY . /doccano/
+WORKDIR /doccano
 
-WORKDIR  /doccano/app/
+ENV DEBUG="True"
+ENV SECRET_KEY="change-me-in-production"
+ENV BIND="0.0.0.0:80"
+ENV WORKERS="2"
+ENV GOOGLE_TRACKING_ID=""
+ENV AZURE_APPINSIGHTS_IKEY=""
 
-# RUN python manage.py migrate
+EXPOSE 80
 
-# RUN echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'pass')" | python manage.py shell
-
-EXPOSE 8000
-
-CMD python manage.py migrate && python manage.py runserver 0.0.0.0:8000
+CMD ["/doccano/tools/run.sh"]

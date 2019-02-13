@@ -1,0 +1,10 @@
+*
+!app/
+app/staticfiles/
+app/db.sqlite3
+app/server/node_modules/
+!data/
+!tests/
+!tools/
+!.flake8
+!requirements.txt

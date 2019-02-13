@@ -1,9 +1,10 @@
-import string
+import json
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.staticfiles.storage import staticfiles_storage
+from .utils import get_key_choices
 
 
 class Project(models.Model):
@@ -119,11 +120,11 @@ class Project(models.Model):
 
 
 class Label(models.Model):
-    KEY_CHOICES = ((u, c) for u, c in zip(string.ascii_lowercase, string.ascii_lowercase))
+    KEY_CHOICES = get_key_choices()
     COLOR_CHOICES = ()
 
     text = models.CharField(max_length=100)
-    shortcut = models.CharField(max_length=10, choices=KEY_CHOICES)
+    shortcut = models.CharField(max_length=15, blank=True, null=True, choices=KEY_CHOICES)
     project = models.ForeignKey(Project, related_name='labels', on_delete=models.CASCADE)
     background_color = models.CharField(max_length=7, default='#209cee')
     text_color = models.CharField(max_length=7, default='#ffffff')
@@ -141,6 +142,7 @@ class Label(models.Model):
 class Document(models.Model):
     text = models.TextField()
     project = models.ForeignKey(Project, related_name='documents', on_delete=models.CASCADE)
+    metadata = models.TextField(default='{}')
 
     def get_annotations(self):
         if self.project.is_type_of(Project.DOCUMENT_CLASSIFICATION):
@@ -163,13 +165,13 @@ class Document(models.Model):
 
     def make_dataset_for_classification(self):
         annotations = self.get_annotations()
-        dataset = [[a.document.id, a.document.text, a.label.text, a.user.username]
+        dataset = [[self.id, self.text, a.label.text, a.user.username, self.metadata]
                    for a in annotations]
         return dataset
 
     def make_dataset_for_sequence_labeling(self):
         annotations = self.get_annotations()
-        dataset = [[self.id, ch, 'O'] for ch in self.text]
+        dataset = [[self.id, ch, 'O', self.metadata] for ch in self.text]
         for a in annotations:
             for i in range(a.start_offset, a.end_offset):
                 if i == a.start_offset:
@@ -180,7 +182,7 @@ class Document(models.Model):
 
     def make_dataset_for_seq2seq(self):
         annotations = self.get_annotations()
-        dataset = [[a.document.id, a.document.text, a.text, a.user.username]
+        dataset = [[self.id, self.text, a.text, a.user.username, self.metadata]
                    for a in annotations]
         return dataset
 
@@ -199,21 +201,21 @@ class Document(models.Model):
         annotations = self.get_annotations()
         labels = [a.label.text for a in annotations]
         username = annotations[0].user.username
-        dataset = {'doc_id': self.id, 'text': self.text, 'labels': labels, 'username': username}
+        dataset = {'doc_id': self.id, 'text': self.text, 'labels': labels, 'username': username, 'metadata': json.loads(self.metadata)}
         return dataset
 
     def make_dataset_for_sequence_labeling_json(self):
         annotations = self.get_annotations()
         entities = [(a.start_offset, a.end_offset, a.label.text) for a in annotations]
         username = annotations[0].user.username
-        dataset = {'doc_id': self.id, 'text': self.text, 'entities': entities, 'username': username}
+        dataset = {'doc_id': self.id, 'text': self.text, 'entities': entities, 'username': username, 'metadata': json.loads(self.metadata)}
         return dataset
 
     def make_dataset_for_seq2seq_json(self):
         annotations = self.get_annotations()
         sentences = [a.text for a in annotations]
         username = annotations[0].user.username
-        dataset = {'doc_id': self.id, 'text': self.text, 'sentences': sentences, 'username': username}
+        dataset = {'doc_id': self.id, 'text': self.text, 'sentences': sentences, 'username': username, 'metadata': json.loads(self.metadata)}
         return dataset
 
     def __str__(self):
